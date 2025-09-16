@@ -16,8 +16,21 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ shifts, employees }) => {
   const [showForm, setShowForm] = useState(false);
   const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>('');
+  const [isMobile, setIsMobile] = useState(false);
 
   const shopId = `shop_${auth.currentUser?.uid}`;
+
+  // Mobil cihaz kontrolü
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Vardiyaları FullCalendar eventlerine çevir
   const events = shifts.map(shift => {
@@ -65,6 +78,23 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ shifts, employees }) => {
     setShowForm(true);
   };
 
+  const handleDateClick = (clickInfo: any) => {
+    // Mobilde date click için alternatif
+    if (isMobile) {
+      const selectedDate = clickInfo.dateStr;
+      setSelectedDate(selectedDate);
+      setSelectedShift(null);
+      setShowForm(true);
+    }
+  };
+
+  const handleAddShift = () => {
+    const today = new Date().toISOString().split('T')[0];
+    setSelectedDate(today);
+    setSelectedShift(null);
+    setShowForm(true);
+  };
+
   const handleEventClick = (clickInfo: any) => {
     const shift = clickInfo.event.extendedProps.shift;
     setSelectedShift(shift);
@@ -80,11 +110,28 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ shifts, employees }) => {
 
   return (
     <div className="space-y-4">
+      {/* Mobil için vardiya ekleme butonu */}
+      {isMobile && (
+        <div className="bg-white rounded-lg p-4">
+          <button
+            onClick={handleAddShift}
+            className="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
+          >
+            <span className="text-lg">+</span>
+            <span>Yeni Vardiya Ekle</span>
+          </button>
+        </div>
+      )}
+
       {/* Takvim */}
       <div className="bg-white rounded-lg p-4">
         <FullCalendar
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-          headerToolbar={{
+          headerToolbar={isMobile ? {
+            left: 'prev,next',
+            center: 'title',
+            right: 'today'
+          } : {
             left: 'prev,next today',
             center: 'title',
             right: 'dayGridMonth,timeGridWeek'
@@ -92,16 +139,17 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ shifts, employees }) => {
           initialView="dayGridMonth"
           locale="tr"
           firstDay={1} // Pazartesi
-          height="auto"
+          height={isMobile ? 400 : "auto"}
           events={events}
-          selectable={true}
+          selectable={!isMobile}
           selectMirror={true}
-          dayMaxEvents={true}
+          dayMaxEvents={isMobile ? 2 : true}
           weekends={true}
           select={handleDateSelect}
+          dateClick={handleDateClick}
           eventClick={handleEventClick}
           eventDisplay="block"
-          displayEventTime={true}
+          displayEventTime={!isMobile}
           eventTimeFormat={{
             hour: '2-digit',
             minute: '2-digit',
@@ -119,6 +167,11 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ shifts, employees }) => {
             day: 'Gün'
           }}
           noEventsText="Vardiya bulunamadı"
+          moreLinkText="daha fazla"
+          dayHeaderContent={isMobile ? (args) => {
+            const day = args.date.toLocaleDateString('tr-TR', { weekday: 'short' });
+            return day.charAt(0).toUpperCase() + day.slice(1);
+          } : undefined}
         />
       </div>
 
@@ -126,9 +179,19 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ shifts, employees }) => {
       <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
         <p><strong>Kullanım:</strong></p>
         <ul className="list-disc list-inside space-y-1 mt-2">
-          <li>Yeni vardiya eklemek için takvimde bir tarihe tıklayın</li>
-          <li>Mevcut vardiyayı düzenlemek için vardiya üzerine tıklayın</li>
-          <li>Haftalık görünüm için sağ üstteki "Hafta" butonunu kullanın</li>
+          {isMobile ? (
+            <>
+              <li>Yeni vardiya eklemek için yukarıdaki "Yeni Vardiya Ekle" butonunu kullanın</li>
+              <li>Mevcut vardiyayı düzenlemek için vardiya üzerine tıklayın</li>
+              <li>Tarihe tıklayarak o güne vardiya ekleyebilirsiniz</li>
+            </>
+          ) : (
+            <>
+              <li>Yeni vardiya eklemek için takvimde bir tarihe tıklayın</li>
+              <li>Mevcut vardiyayı düzenlemek için vardiya üzerine tıklayın</li>
+              <li>Haftalık görünüm için sağ üstteki "Hafta" butonunu kullanın</li>
+            </>
+          )}
         </ul>
       </div>
 

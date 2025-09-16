@@ -28,6 +28,59 @@
   border-radius: 4px !important;
 }
 
+/* Mobil FullCalendar stilleri */
+@media (max-width: 768px) {
+  .fc-header-toolbar {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  
+  .fc-toolbar-chunk {
+    display: flex !important;
+    justify-content: center !important;
+  }
+  
+  .fc-button {
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+  }
+  
+  .fc-daygrid-event {
+    font-size: 10px !important;
+    padding: 1px 2px !important;
+    margin: 0.5px !important;
+  }
+  
+  .fc-col-header-cell {
+    padding: 4px 2px !important;
+    font-size: 11px !important;
+  }
+  
+  .fc-daygrid-day-number {
+    font-size: 12px !important;
+    padding: 2px !important;
+  }
+  
+  .fc-day {
+    min-height: 40px !important;
+  }
+  
+  .fc-more-link {
+    font-size: 10px !important;
+    color: #3b82f6 !important;
+  }
+  
+  /* Mobilde tıklanabilir alanları büyüt */
+  .fc-daygrid-day-frame {
+    min-height: 40px !important;
+    cursor: pointer !important;
+  }
+  
+  .fc-day-today {
+    background: rgba(59, 130, 246, 0.1) !important;
+  }
+}
+
 /* Yazdırma stilleri */
 @media print {
   .no-print {
@@ -83,6 +136,18 @@
 .modal-content {
   @apply bg-white rounded-lg p-6 max-w-md w-full mx-4 max-h-screen overflow-y-auto shadow-xl;
   animation: slideIn 0.2s ease-out;
+}
+
+/* Mobil modal stilleri */
+@media (max-width: 768px) {
+  .modal-content {
+    @apply p-4 mx-2 max-w-full;
+    max-height: 90vh !important;
+  }
+  
+  .modal-overlay {
+    @apply px-2;
+  }
 }
 
 @keyframes fadeIn {
