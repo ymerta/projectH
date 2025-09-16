@@ -1,0 +1,33 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Shops koleksiyonu - sadece sahip erişebilir
+    match /shops/{shopId} {
+      allow read, write: if request.auth != null && 
+        resource.data.ownerUid == request.auth.uid;
+      allow create: if request.auth != null && 
+        request.resource.data.ownerUid == request.auth.uid;
+      
+      // Employees alt koleksiyonu - sadece mağaza sahibi
+      match /employees/{empId} {
+        allow read, write: if request.auth != null && 
+          get(/databases/$(database)/documents/shops/$(shopId)).data.ownerUid == request.auth.uid;
+      }
+      
+      // Shifts alt koleksiyonu - sadece mağaza sahibi
+      match /shifts/{shiftId} {
+        allow read, write: if request.auth != null && 
+          get(/databases/$(database)/documents/shops/$(shopId)).data.ownerUid == request.auth.uid;
+      }
+      
+      // Timesheets alt koleksiyonu - okuma: mağaza sahibi, yazma: sadece Cloud Functions
+      match /timesheets/{yyyyMM}/employees/{empId} {
+        allow read: if request.auth != null && 
+          get(/databases/$(database)/documents/shops/$(shopId)).data.ownerUid == request.auth.uid;
+        // Cloud Functions için yazma yetkisi (isteğe bağlı)
+        allow write: if false; // Sadece Cloud Functions yazabilir
+      }
+    }
+  }
+}
+
