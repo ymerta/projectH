@@ -9,19 +9,11 @@ const Login: React.FC = () => {
   const [error, setError] = useState('');
 
   const shopName = import.meta.env.VITE_SHOP_NAME || 'Mağaza';
-  const allowedEmail = import.meta.env.VITE_ALLOWED_EMAIL || 'admin@example.com';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-
-    // Sadece belirli e-posta adresine izin ver
-    if (email !== allowedEmail) {
-      setError('Bu e-posta adresi ile giriş yapamazsınız.');
-      setLoading(false);
-      return;
-    }
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
