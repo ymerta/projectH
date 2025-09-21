@@ -28,7 +28,9 @@ export function calculateMonthlySummary(
 
   employees.forEach(employee => {
     const employeeShifts = shiftsByEmployee[employee.id] || [];
-    const totalHours = employeeShifts.reduce((sum, shift) => sum + shift.totalHours, 0);
+    // Sadece izin olmayan vardiyaları say
+    const workingShifts = employeeShifts.filter(shift => !shift.isLeave);
+    const totalHours = workingShifts.reduce((sum, shift) => sum + shift.totalHours, 0);
     const totalPay = totalHours * employee.hourlyRate;
 
     summaries.push({

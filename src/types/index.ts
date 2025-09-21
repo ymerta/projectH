@@ -1,5 +1,23 @@
 import { Timestamp } from 'firebase/firestore';
 
+// İzin türleri
+export enum LeaveType {
+  ANNUAL = 'annual',        // Yıllık izin
+  UNPAID = 'unpaid',        // Ücretsiz izin
+  WEEKLY = 'weekly',        // Haftalık izin
+  EXCUSE = 'excuse',        // Mazeret izni
+  MEDICAL = 'medical'       // Rapor
+}
+
+// İzin türü etiketleri
+export const LEAVE_TYPE_LABELS: Record<LeaveType, string> = {
+  [LeaveType.ANNUAL]: 'Yıllık İzin',
+  [LeaveType.UNPAID]: 'Ücretsiz İzin',
+  [LeaveType.WEEKLY]: 'Haftalık İzin',
+  [LeaveType.EXCUSE]: 'Mazeret İzni',
+  [LeaveType.MEDICAL]: 'Rapor'
+};
+
 // Mağaza tipi
 export interface Shop {
   id: string;
@@ -26,6 +44,8 @@ export interface Shift {
   breakMin: number;
   totalHours: number;
   notes?: string;
+  isLeave?: boolean; // İzin kaydı olup olmadığı
+  leaveType?: LeaveType; // İzin türü
 }
 
 // Aylık özet tipi
@@ -51,6 +71,8 @@ export interface ShiftFormData {
   end: string;
   breakMin: number;
   notes?: string;
+  isLeave?: boolean; // İzin kaydı olup olmadığı
+  leaveType?: LeaveType; // İzin türü
 }
 
 export interface EmployeeFormData {

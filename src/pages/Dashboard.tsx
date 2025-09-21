@@ -3,7 +3,6 @@ import { collection, query, where, orderBy, onSnapshot, Timestamp } from 'fireba
 import { auth, db } from '../firebase';
 import { Shift, Employee } from '../types';
 import ScheduleView from '../components/ScheduleView';
-import SeedDataButton from '../components/SeedDataButton';
 import { formatDate, getTodayString } from '../utils/time';
 import dayjs from 'dayjs';
 
@@ -74,11 +73,11 @@ const Dashboard: React.FC = () => {
     ).length;
 
     const weeklyHours = shifts
-      .filter(shift => shift.date.toDate() >= startOfWeek)
+      .filter(shift => shift.date.toDate() >= startOfWeek && !shift.isLeave)
       .reduce((sum, shift) => sum + shift.totalHours, 0);
 
     const monthlyHours = shifts
-      .filter(shift => shift.date.toDate() >= startOfMonth)
+      .filter(shift => shift.date.toDate() >= startOfMonth && !shift.isLeave)
       .reduce((sum, shift) => sum + shift.totalHours, 0);
 
     setStats({
@@ -100,14 +99,9 @@ const Dashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Başlık */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Ana Sayfa</h1>
-          <p className="text-gray-600">Vardiya çizelgesi ve hızlı özet</p>
-        </div>
-        <div className="no-print">
-          <SeedDataButton />
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Ana Sayfa</h1>
+        <p className="text-gray-600">Vardiya çizelgesi ve hızlı özet</p>
       </div>
 
       {/* İstatistik kartları */}

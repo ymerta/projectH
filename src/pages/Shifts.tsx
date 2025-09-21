@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, where, orderBy, onSnapshot, doc, deleteDoc, Timestamp } from 'firebase/firestore';
 import { auth, db } from '../firebase';
-import { Shift, Employee } from '../types';
+import { Shift, Employee, LEAVE_TYPE_LABELS } from '../types';
 import ShiftForm from '../components/ShiftForm';
 import { formatDate, getMonthRange } from '../utils/time';
 import dayjs from 'dayjs';
@@ -81,15 +81,15 @@ const Shifts: React.FC = () => {
   };
 
   const handleDeleteShift = async (shiftId: string) => {
-    if (!confirm('Bu vardiyayı silmek istediğinizden emin misiniz?')) {
+    if (!confirm('Bu kaydı silmek istediğinizden emin misiniz?')) {
       return;
     }
 
     try {
       await deleteDoc(doc(db, 'shops', shopId, 'shifts', shiftId));
     } catch (error) {
-      console.error('Vardiya silme hatası:', error);
-      alert('Vardiya silinirken bir hata oluştu.');
+      console.error('Kayıt silme hatası:', error);
+      alert('Kayıt silinirken bir hata oluştu.');
     }
   };
 
@@ -116,14 +116,14 @@ const Shifts: React.FC = () => {
       {/* Başlık ve eylemler */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Vardiyalar</h1>
-          <p className="text-gray-600">Vardiya kayıtlarını görüntüleyin ve yönetin</p>
+          <h1 className="text-2xl font-bold text-gray-900">Vardiya & İzin Kayıtları</h1>
+          <p className="text-gray-600">Vardiya ve izin kayıtlarını görüntüleyin ve yönetin</p>
         </div>
         <button
           onClick={handleAddShift}
           className="btn-primary"
         >
-          + Yeni Vardiya
+          + Yeni Kayıt
         </button>
       </div>
 
@@ -169,16 +169,16 @@ const Shifts: React.FC = () => {
           <div className="text-center py-12">
             <div className="text-gray-400 text-6xl mb-4">📅</div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Vardiya bulunamadı
+              Kayıt bulunamadı
             </h3>
             <p className="text-gray-600 mb-4">
-              Seçili dönem için vardiya kaydı bulunmuyor
+              Seçili dönem için vardiya veya izin kaydı bulunmuyor
             </p>
             <button
               onClick={handleAddShift}
               className="btn-primary"
             >
-              Vardiya Ekle
+              Kayıt Ekle
             </button>
           </div>
         ) : (
@@ -193,10 +193,10 @@ const Shifts: React.FC = () => {
                     Çalışan
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Saat Aralığı
+                    Tür
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Mola
+                    Detay
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Toplam Saat
@@ -226,18 +226,33 @@ const Shifts: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {shift.start} - {shift.end}
-                      </div>
+                      {shift.isLeave ? (
+                        <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                          İzin
+                        </div>
+                      ) : (
+                        <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          Vardiya
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {shift.breakMin > 0 ? `${shift.breakMin} dk` : '-'}
-                      </div>
+                      {shift.isLeave ? (
+                        <div className="text-sm text-gray-900">
+                          {shift.leaveType ? LEAVE_TYPE_LABELS[shift.leaveType] : 'İzin türü belirtilmemiş'}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-gray-900">
+                          <div>{shift.start} - {shift.end}</div>
+                          {shift.breakMin > 0 && (
+                            <div className="text-xs text-gray-500">Mola: {shift.breakMin} dk</div>
+                          )}
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
-                        {shift.totalHours.toFixed(2)} saat
+                        {shift.isLeave ? '-' : `${shift.totalHours.toFixed(2)} saat`}
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -271,22 +286,32 @@ const Shifts: React.FC = () => {
         {/* Özet bilgiler */}
         {filteredShifts.length > 0 && (
           <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
               <div>
                 <div className="text-2xl font-bold text-gray-900">
-                  {filteredShifts.length}
+                  {filteredShifts.filter(shift => !shift.isLeave).length}
                 </div>
                 <div className="text-sm text-gray-600">Toplam Vardiya</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-gray-900">
-                  {filteredShifts.reduce((sum, shift) => sum + shift.totalHours, 0).toFixed(2)}
+                  {filteredShifts.filter(shift => shift.isLeave).length}
                 </div>
-                <div className="text-sm text-gray-600">Toplam Saat</div>
+                <div className="text-sm text-gray-600">Toplam İzin</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-gray-900">
-                  {Math.round(filteredShifts.reduce((sum, shift) => sum + shift.totalHours, 0) / filteredShifts.length * 100) / 100 || 0}
+                  {filteredShifts.filter(shift => !shift.isLeave).reduce((sum, shift) => sum + shift.totalHours, 0).toFixed(2)}
+                </div>
+                <div className="text-sm text-gray-600">Toplam Çalışma Saati</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {(() => {
+                    const workingShifts = filteredShifts.filter(shift => !shift.isLeave);
+                    const totalHours = workingShifts.reduce((sum, shift) => sum + shift.totalHours, 0);
+                    return workingShifts.length > 0 ? (totalHours / workingShifts.length).toFixed(2) : '0.00';
+                  })()}
                 </div>
                 <div className="text-sm text-gray-600">Ortalama Saat</div>
               </div>

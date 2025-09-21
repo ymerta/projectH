@@ -3,7 +3,8 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import { Shift, Employee } from '../types';
+import { Shift, Employee, LEAVE_TYPE_LABELS } from '../types';
+import { formatDate } from '../utils/time';
 import ShiftForm from './ShiftForm';
 import { auth } from '../firebase';
 
@@ -19,6 +20,45 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ shifts, employees }) => {
   const [isMobile, setIsMobile] = useState(false);
 
   const shopId = `shop_${auth.currentUser?.uid}`;
+
+  // Dinamik CSS oluştur
+  React.useEffect(() => {
+    // Mevcut style'ı temizle
+    const existingStyle = document.getElementById('employee-colors');
+    if (existingStyle) {
+      existingStyle.remove();
+    }
+
+    // Yeni style oluştur
+    const style = document.createElement('style');
+    style.id = 'employee-colors';
+    
+    let css = employees.map(employee => `
+      .fc-event.employee-${employee.id} {
+        background-color: ${employee.color} !important;
+        border-color: ${employee.color} !important;
+      }
+    `).join('\n');
+
+    // İzin eventleri için kırmızı renk
+    css += `
+      .fc-event.leave-event {
+        background-color: #EF4444 !important;
+        border-color: #DC2626 !important;
+      }
+    `;
+    
+    style.textContent = css;
+    document.head.appendChild(style);
+
+    // Cleanup function
+    return () => {
+      const styleToRemove = document.getElementById('employee-colors');
+      if (styleToRemove) {
+        styleToRemove.remove();
+      }
+    };
+  }, [employees]);
 
   // Mobil cihaz kontrolü
   React.useEffect(() => {
@@ -36,9 +76,30 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ shifts, employees }) => {
   const events = shifts.map(shift => {
     const employee = employees.find(emp => emp.id === shift.employeeId);
     const date = shift.date.toDate();
-    // const dateStr = date.toISOString().split('T')[0];
+    // Timezone ile doğru tarih formatı
+    const dateStr = formatDate(date, 'YYYY-MM-DD');
     
-    // Başlangıç ve bitiş saatlerini hesapla
+    // İzin kayıtları için
+    if (shift.isLeave) {
+      const leaveLabel = shift.leaveType ? LEAVE_TYPE_LABELS[shift.leaveType] : 'İzin';
+      return {
+        id: shift.id,
+        title: `${employee?.fullName || 'Bilinmeyen'} - ${leaveLabel}`,
+        start: dateStr,
+        allDay: true,
+        backgroundColor: '#EF4444', // Kırmızı renk izinler için
+        borderColor: '#DC2626',
+        textColor: '#ffffff',
+        classNames: ['leave-event'],
+        extendedProps: {
+          shift,
+          employee,
+          isLeave: true
+        }
+      };
+    }
+    
+    // Normal vardiya kayıtları için
     const [startHour, startMin] = shift.start.split(':').map(Number);
     const [endHour, endMin] = shift.end.split(':').map(Number);
     
@@ -67,9 +128,11 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ shifts, employees }) => {
       backgroundColor: employee?.color || '#6366F1',
       borderColor: employee?.color || '#6366F1',
       textColor: '#ffffff',
+      classNames: [`employee-${shift.employeeId}`],
       extendedProps: {
         shift,
-        employee
+        employee,
+        isLeave: false
       }
     };
   });
@@ -121,7 +184,7 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ shifts, employees }) => {
             className="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
           >
             <span className="text-lg">+</span>
-            <span>Yeni Vardiya Ekle</span>
+            <span>Yeni Kayıt Ekle</span>
           </button>
         </div>
       )}
@@ -169,7 +232,7 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ shifts, employees }) => {
             week: 'Hafta',
             day: 'Gün'
           }}
-          noEventsText="Vardiya bulunamadı"
+          noEventsText="Kayıt bulunamadı"
           moreLinkText="daha fazla"
           dayHeaderContent={isMobile ? (args) => {
             const day = args.date.toLocaleDateString('tr-TR', { weekday: 'short' });
@@ -184,15 +247,16 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ shifts, employees }) => {
         <ul className="list-disc list-inside space-y-1 mt-2">
           {isMobile ? (
             <>
-              <li>Yeni vardiya eklemek için yukarıdaki "Yeni Vardiya Ekle" butonunu kullanın</li>
-              <li>Mevcut vardiyayı düzenlemek için vardiya üzerine tıklayın</li>
-              <li>Tarihe tıklayarak o güne vardiya ekleyebilirsiniz</li>
+              <li>Yeni vardiya/izin eklemek için yukarıdaki "Yeni Kayıt Ekle" butonunu kullanın</li>
+              <li>Mevcut kaydı düzenlemek için üzerine tıklayın</li>
+              <li>Tarihe tıklayarak o güne kayıt ekleyebilirsiniz</li>
             </>
           ) : (
             <>
-              <li>Yeni vardiya eklemek için takvimde bir tarihe tıklayın</li>
-              <li>Mevcut vardiyayı düzenlemek için vardiya üzerine tıklayın</li>
+              <li>Yeni vardiya/izin eklemek için takvimde bir tarihe tıklayın</li>
+              <li>Mevcut kaydı düzenlemek için üzerine tıklayın</li>
               <li>Haftalık görünüm için sağ üstteki "Hafta" butonunu kullanın</li>
+              <li>İzin kayıtları kırmızı, vardiya kayıtları çalışan renginde görünür</li>
             </>
           )}
         </ul>
