@@ -10,10 +10,21 @@ interface EmployeeFormProps {
 }
 
 const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, shopId }) => {
+  // Rastgele bir başlangıç rengi seç
+  const getRandomColor = () => {
+    const colors = [
+      '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6',
+      '#EC4899', '#14B8A6', '#F97316', '#6366F1', '#84CC16',
+      '#06B6D4', '#DC2626', '#059669', '#D97706', '#7C3AED'
+    ];
+    return colors[Math.floor(Math.random() * colors.length)];
+  };
+
   const [formData, setFormData] = useState<EmployeeFormData>({
     fullName: '',
     hourlyRate: 150,
-    active: true
+    active: true,
+    color: getRandomColor()
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -23,7 +34,8 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, shopId }
       setFormData({
         fullName: employee.fullName,
         hourlyRate: employee.hourlyRate,
-        active: employee.active
+        active: employee.active,
+        color: employee.color || getRandomColor()
       });
     }
   }, [employee]);
@@ -54,6 +66,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, shopId }
           fullName: formData.fullName.trim(),
           hourlyRate: formData.hourlyRate,
           active: formData.active,
+          color: formData.color,
           updatedAt: new Date()
         });
       } else {
@@ -63,6 +76,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, shopId }
           fullName: formData.fullName.trim(),
           hourlyRate: formData.hourlyRate,
           active: formData.active,
+          color: formData.color,
           createdAt: new Date()
         });
       }
@@ -124,6 +138,30 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ employee, onClose, shopId }
               step="0.01"
               required
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Çalışan Rengi *
+            </label>
+            <div className="flex items-center space-x-2">
+              <input
+                type="color"
+                value={formData.color}
+                onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                className="w-12 h-10 border border-gray-300 rounded cursor-pointer"
+              />
+              <div 
+                className="w-16 h-10 rounded border border-gray-300 flex items-center justify-center text-white text-xs font-medium"
+                style={{ backgroundColor: formData.color }}
+              >
+                Örnek
+              </div>
+              <span className="text-sm text-gray-600">{formData.color}</span>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Bu renk vardiya çizelgesinde çalışanı ayırt etmek için kullanılacak
+            </p>
           </div>
 
           <div className="flex items-center">

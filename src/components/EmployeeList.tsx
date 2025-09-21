@@ -61,6 +61,9 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onEdit, onDelete
                 Çalışan Adı
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Renk
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Saatlik Ücret
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -75,8 +78,19 @@ const EmployeeList: React.FC<EmployeeListProps> = ({ employees, onEdit, onDelete
             {filteredEmployees.map((employee) => (
               <tr key={employee.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">
-                    {employee.fullName}
+                  <div className="flex items-center space-x-3">
+                    <div 
+                      className="w-4 h-4 rounded-full border border-gray-300"
+                      style={{ backgroundColor: employee.color || '#6366F1' }}
+                    ></div>
+                    <div className="text-sm font-medium text-gray-900">
+                      {employee.fullName}
+                    </div>
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm text-gray-900 font-mono">
+                    {employee.color || '#6366F1'}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">

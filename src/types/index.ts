@@ -13,6 +13,7 @@ export interface Employee {
   fullName: string;
   hourlyRate: number;
   active: boolean;
+  color: string; // Hex renk kodu, örn: "#3B82F6"
 }
 
 // Vardiya tipi
@@ -56,5 +57,6 @@ export interface EmployeeFormData {
   fullName: string;
   hourlyRate: number;
   active: boolean;
+  color: string;
 }
 

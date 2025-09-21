@@ -64,6 +64,9 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ shifts, employees }) => {
       title: employee ? employee.fullName : 'Bilinmeyen Çalışan',
       start: startDateTime,
       end: endDateTime,
+      backgroundColor: employee?.color || '#6366F1',
+      borderColor: employee?.color || '#6366F1',
+      textColor: '#ffffff',
       extendedProps: {
         shift,
         employee
